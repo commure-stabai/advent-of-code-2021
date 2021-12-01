@@ -4,7 +4,7 @@ const input = await getInput('day1');
 const inputLines = input.split('\n');
 const inputNumbers = inputLines.map(l => Number(l));
 
-function part1() {
+function part1(): number {
   let last: number|undefined;
   let increaseCount = 0;
   for (const num of inputNumbers) {
@@ -13,10 +13,10 @@ function part1() {
     }
     last = num;
   }
-  console.log(increaseCount);
+  return increaseCount;
 }
 
-function part2() {
+function part2(): number {
   const slidingWindow: number[] = [];
   let lastSum: number|undefined;
   let increaseCount = 0;
@@ -34,7 +34,8 @@ function part2() {
     }
     lastSum = newSum;
   }
-  console.log(increaseCount);
+  return increaseCount;
 }
 
-part2();
+console.log(`Part 1: ${part1()}`);
+console.log(`Part 2: ${part2()}`);
