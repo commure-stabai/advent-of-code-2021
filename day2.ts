@@ -1,25 +1,23 @@
-import { getInput, sum } from "./helpers.ts";
+import { getInput, parseInput } from "./helpers.ts";
 
 const input = await getInput('day2');
-const inputLines = input.split('\n');
+const parsedInput = parseInput(input, tokens => ({direction: tokens[0], magnitude: Number(tokens[1])}));
 
 function part1(): number {
   const position = {
     depth: 0,
     horizontal: 0,
   };
-  for (const line of inputLines) {
-    const [direction, magnitudeStr] = line.split(' ');
-    const magnitude = Number(magnitudeStr);
-    switch (direction) {
+  for (const record of parsedInput) {
+    switch (record.direction) {
       case 'forward':
-        position.horizontal += magnitude;
+        position.horizontal += record.magnitude;
         break;
       case 'down':
-        position.depth += magnitude;
+        position.depth += record.magnitude;
         break;
       case 'up':
-        position.depth -= magnitude;
+        position.depth -= record.magnitude;
         break;
     }
   }
@@ -32,19 +30,17 @@ function part2(): number {
     horizontal: 0,
     aim: 0,
   };
-  for (const line of inputLines) {
-    const [direction, magnitudeStr] = line.split(' ');
-    const magnitude = Number(magnitudeStr);
-    switch (direction) {
+  for (const record of parsedInput) {
+    switch (record.direction) {
       case 'forward':
-        position.horizontal += magnitude;
-        position.depth += position.aim * magnitude;
+        position.horizontal += record.magnitude;
+        position.depth += position.aim * record.magnitude;
         break;
       case 'down':
-        position.aim += magnitude;
+        position.aim += record.magnitude;
         break;
       case 'up':
-        position.aim -= magnitude;
+        position.aim -= record.magnitude;
         break;
     }
   }
