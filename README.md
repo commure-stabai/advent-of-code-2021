@@ -13,3 +13,8 @@ brew install deno
 ```
 deno run --allow-read day1.ts
 ```
+
+## Daily Exercises
+
+* [Day 1](day1.ts)
+* [Day 2](day2.ts)
