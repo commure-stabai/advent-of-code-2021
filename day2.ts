@@ -1,7 +1,10 @@
 import { getInput, parseInput } from "./helpers.ts";
 
 const input = await getInput('day2');
-const parsedInput = parseInput(input, tokens => ({direction: tokens[0], magnitude: Number(tokens[1])}));
+const parsedInput = parseInput(input, tokens => ({
+  direction: tokens[0],
+  magnitude: Number(tokens[1]),
+}));
 
 function part1(): number {
   const position = {
