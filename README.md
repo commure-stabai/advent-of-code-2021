@@ -18,3 +18,4 @@ deno run --allow-read day1.ts
 
 * [Day 1](day1.ts)
 * [Day 2](day2.ts)
+* [Day 3](day3.ts)
