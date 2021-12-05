@@ -1,14 +1,26 @@
+import {
+  bold,
+  underline,
+  red,
+  green,
+} from "https://deno.land/std@0.117.0/fmt/colors.ts";
+
 export type ParseFn<O, I = string> = (value: I, index?: number, array?: Array<I>) => O;
 
 export const DEFAULT_NONTOKEN_PATTERN = /\W+/;
 
-type InputParser<T> = LineInputParser<T>|TokenInputParser<T>;
+type InputParser<T> = LineInputParser<T>|LineRegexCaptureInputParser<T>|TokenInputParser<T>;
 interface LineInputParser<T> {
-  mode: 'lines';
+  mode: 'line';
   parseFn: ParseFn<T, string>;
 }
+interface LineRegexCaptureInputParser<T> {
+  mode: 'lineRegexCapture';
+  regex: RegExp;
+  parseFn: ParseFn<T, string[]>;
+}
 interface TokenInputParser<T> {
-  mode: 'tokens';
+  mode: 'token';
   parseFn: ParseFn<T, string[]>;
 }
 
@@ -31,23 +43,68 @@ export async function getParsedInputLines<T>(baseName: string, parseFn: (value: 
   return inputLines.map(parseFn);
 }
 
-export async function analyzeInput<T = never>(options: InputAnalysisOptions<T>): Promise<Inputs<T>> {
+export async function analyzeInput<T = never>(options: InputAnalysisOptions<T>, forTest = false): Promise<Inputs<T>> {
   const nontokenPattern = options.nontokenPattern ?? DEFAULT_NONTOKEN_PATTERN
-  const raw = await getInput(options.baseFileName);
+  const baseFileName = forTest ? `testdata/${options.baseFileName}` : options.baseFileName;
+  const raw = await getInput(baseFileName);
   const lines = splitLines(raw);
   const tokens = tokenizeAll(lines, nontokenPattern);
   let parsed: T[] = [];
-  if (options.parser != null) {
-    switch (options.parser.mode) {
-      case "lines":
-        parsed = lines.map(options.parser.parseFn);
+  const parser = options.parser;
+  if (parser != null) {
+    switch (parser.mode) {
+      case "line":
+        parsed = lines.map(parser.parseFn);
         break;
-      case "tokens":
-        parsed = tokens.map(options.parser.parseFn);
+      case "lineRegexCapture":
+        parsed = lines.map(l => parser.regex.exec(l) ?? []).map(c => parser.parseFn(c));
+        break;
+      case "token":
+        parsed = tokens.map(parser.parseFn);
         break;
     }
   }
   return {raw, lines, tokens, parsed};
+}
+
+export function lineParser<T>(options: Omit<LineInputParser<T>, 'mode'>): LineInputParser<T> {
+  return {mode: 'line', ...options};
+}
+
+export function lineRegexCaptureParser<T>(options: Omit<LineRegexCaptureInputParser<T>, 'mode'>): LineRegexCaptureInputParser<T> {
+  return {mode: 'lineRegexCapture', ...options};
+}
+
+export function tokenParser<T>(options: Omit<TokenInputParser<T>, 'mode'>): TokenInputParser<T> {
+  return {mode: 'token', ...options};
+}
+
+export async function solve<T = never>(options: SolveOptions<T>) {
+  if (options.expectedTestResults != null) {
+    const inputs = await analyzeInput(options, true);
+    const part1 = options.part1(inputs);
+    const part2 = options.part2(inputs);
+    const part1Passed = String(part1) === String(options.expectedTestResults.part1);
+    const part2Passed = String(part2) === String(options.expectedTestResults.part2);
+    const part1PassStr = part1Passed ? green('PASS') : red('FAIL');
+    const part2PassStr = part2Passed ? green('PASS') : red('FAIL');
+    console.log(bold(underline('Tests:')));
+    console.log('Output:', {part1, part2});
+    console.log(`Part 1 status: ${part1PassStr}`);
+    console.log(`Part 2 status: ${part2PassStr}`);
+    console.log();
+  }
+  const inputs = await analyzeInput(options, false);
+  const part1 = options.part1(inputs);
+  const part2 = options.part2(inputs);
+  console.log(bold(underline('Results:')));
+  console.log({part1, part2});
+}
+
+export interface SolveOptions<P = never> extends InputAnalysisOptions<P> {
+  expectedTestResults?: {part1: unknown, part2: unknown};
+  part1: (input: Inputs<P>) => unknown;
+  part2: (input: Inputs<P>) => unknown;
 }
 
 export interface Inputs<P = never> {

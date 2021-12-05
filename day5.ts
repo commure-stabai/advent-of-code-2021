@@ -1,27 +1,15 @@
-import { analyzeInput } from "./helpers.ts";
-
-interface Point {
-  x: number;
-  y: number;
-}
-
-interface Line {
-  from: Point;
-  to: Point;
-}
+import { analyzeInput, lineRegexCaptureParser } from "./helpers.ts";
 
 const input = await analyzeInput({
   baseFileName: 'day5',
-  parser: {
-    mode: "lines",
-    parseFn: t => {
-      const matches = /([0-9]+),([0-9]+) -> ([0-9]+),([0-9]+)/.exec(t)!;
-      return {
-        from: {x: Number(matches[1]), y: Number(matches[2])},
-        to: {x: Number(matches[3]), y: Number(matches[4])},
-      } as Line;
-    },
-  },
+  parser: lineRegexCaptureParser({
+    regex: /([0-9]+),([0-9]+) -> ([0-9]+),([0-9]+)/,
+    parseFn: captures => ({
+        from: {x: Number(captures[1]), y: Number(captures[2])},
+        to: {x: Number(captures[3]), y: Number(captures[4])},
+      }
+    ),
+  }),
 });
 
 function createGrid() {
