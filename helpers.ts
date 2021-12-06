@@ -9,7 +9,15 @@ export type ParseFn<O, I = string> = (value: I, index?: number, array?: Array<I>
 
 export const DEFAULT_NONTOKEN_PATTERN = /\W+/;
 
-type InputParser<T> = LineInputParser<T>|LineRegexCaptureInputParser<T>|TokenInputParser<T>;
+type InputParser<T> = AllInputParser<T>|AllTokenInputParser<T>|LineInputParser<T>|LineRegexCaptureInputParser<T>|LineTokenInputParser<T>;
+interface AllInputParser<T> {
+  mode: 'all';
+  parseFn: ParseFn<T[], string>;
+}
+interface AllTokenInputParser<T> {
+  mode: 'allToken';
+  parseFn: ParseFn<T, string>;
+}
 interface LineInputParser<T> {
   mode: 'line';
   parseFn: ParseFn<T, string>;
@@ -19,8 +27,8 @@ interface LineRegexCaptureInputParser<T> {
   regex: RegExp;
   parseFn: ParseFn<T, string[]>;
 }
-interface TokenInputParser<T> {
-  mode: 'token';
+interface LineTokenInputParser<T> {
+  mode: 'lineToken';
   parseFn: ParseFn<T, string[]>;
 }
 
@@ -48,23 +56,38 @@ export async function analyzeInput<T = never>(options: InputAnalysisOptions<T>, 
   const baseFileName = forTest ? `testdata/${options.baseFileName}` : options.baseFileName;
   const raw = await getInput(baseFileName);
   const lines = splitLines(raw);
-  const tokens = tokenizeAll(lines, nontokenPattern);
+  const allTokens = tokenize(raw, nontokenPattern);
+  const lineTokens = tokenizeAll(lines, nontokenPattern);
   let parsed: T[] = [];
   const parser = options.parser;
   if (parser != null) {
     switch (parser.mode) {
+      case "all":
+        parsed = parser.parseFn(raw);
+        break;
+      case "allToken":
+        parsed = allTokens.map(parser.parseFn);
+        break;
       case "line":
         parsed = lines.map(parser.parseFn);
         break;
       case "lineRegexCapture":
         parsed = lines.map(l => parser.regex.exec(l) ?? []).map(c => parser.parseFn(c));
         break;
-      case "token":
-        parsed = tokens.map(parser.parseFn);
+      case "lineToken":
+        parsed = lineTokens.map(parser.parseFn);
         break;
     }
   }
-  return {raw, lines, tokens, parsed};
+  return {raw, lines, lineTokens, allTokens, parsed};
+}
+
+export function allInputParser<T>(options: Omit<AllInputParser<T>, 'mode'>): AllInputParser<T> {
+  return {mode: 'all', ...options};
+}
+
+export function allInputTokenParser<T>(options: Omit<AllTokenInputParser<T>, 'mode'>): AllTokenInputParser<T> {
+  return {mode: 'allToken', ...options};
 }
 
 export function lineParser<T>(options: Omit<LineInputParser<T>, 'mode'>): LineInputParser<T> {
@@ -75,15 +98,15 @@ export function lineRegexCaptureParser<T>(options: Omit<LineRegexCaptureInputPar
   return {mode: 'lineRegexCapture', ...options};
 }
 
-export function tokenParser<T>(options: Omit<TokenInputParser<T>, 'mode'>): TokenInputParser<T> {
-  return {mode: 'token', ...options};
+export function lineTokenParser<T>(options: Omit<LineTokenInputParser<T>, 'mode'>): LineTokenInputParser<T> {
+  return {mode: 'lineToken', ...options};
 }
 
 export async function solve<T = never>(options: SolveOptions<T>) {
   if (options.expectedTestResults != null) {
-    const inputs = await analyzeInput(options, true);
-    const part1 = options.part1(inputs);
-    const part2 = options.part2(inputs);
+    const inputs = JSON.stringify(await analyzeInput(options, true));
+    const part1 = options.part1(JSON.parse(inputs));
+    const part2 = options.part2(JSON.parse(inputs));
     const part1Passed = String(part1) === String(options.expectedTestResults.part1);
     const part2Passed = String(part2) === String(options.expectedTestResults.part2);
     const part1PassStr = part1Passed ? green('PASS') : red('FAIL');
@@ -94,9 +117,9 @@ export async function solve<T = never>(options: SolveOptions<T>) {
     console.log(`Part 2 status: ${part2PassStr}`);
     console.log();
   }
-  const inputs = await analyzeInput(options, false);
-  const part1 = options.part1(inputs);
-  const part2 = options.part2(inputs);
+  const inputs = JSON.stringify(await analyzeInput(options, false));
+  const part1 = options.part1(JSON.parse(inputs));
+  const part2 = options.part2(JSON.parse(inputs));
   console.log(bold(underline('Results:')));
   console.log({part1, part2});
 }
@@ -110,7 +133,8 @@ export interface SolveOptions<P = never> extends InputAnalysisOptions<P> {
 export interface Inputs<P = never> {
   raw: string;
   lines: Array<string>;
-  tokens: Array<Array<string>>;
+  allTokens: Array<string>;
+  lineTokens: Array<Array<string>>;
   parsed: Array<P>;
 }
 
@@ -124,16 +148,24 @@ export function sum(numbers: number[]): number {
   return numbers.reduce((previous, current) => previous + current);
 }
 
+export function sumIterable(numbers: IterableIterator<number>): number {
+  let sum = 0;
+  for (const num of numbers) {
+    sum += num;
+  }
+  return sum;
+}
+
 export function splitLines(input: string): Array<string> {
   return input.split('\n');
 }
 
-export function tokenizeLine(line: string, nontokenPattern = DEFAULT_NONTOKEN_PATTERN): Array<string> {
+export function tokenize(line: string, nontokenPattern = DEFAULT_NONTOKEN_PATTERN): Array<string> {
   return line.trim().split(nontokenPattern);
 }
 
 export function tokenizeAll(lines: string[], nontokenPattern = DEFAULT_NONTOKEN_PATTERN): Array<Array<string>> {
-  return lines.map(l => tokenizeLine(l, nontokenPattern));
+  return lines.map(l => tokenize(l, nontokenPattern));
 }
 
 /**
@@ -143,7 +175,7 @@ export function tokenizeAll(lines: string[], nontokenPattern = DEFAULT_NONTOKEN_
 export function parseInput<T>(input: string, parseFn: ParseFn<T, string[]>, nontokenPattern = DEFAULT_NONTOKEN_PATTERN): T[] {
   const parsed: T[] = [];
   for (const line of splitLines(input)) {
-    const tokens = tokenizeLine(line, nontokenPattern);
+    const tokens = tokenize(line, nontokenPattern);
     parsed.push(parseFn(tokens));
   }
   return parsed;

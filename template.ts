@@ -5,6 +5,14 @@ await solve({
 
   // nontokenPattern: /\W+/,
 
+  // parser: allInputParser({
+  //   parseFn: raw => raw.split(',').map(Number),
+  // }),
+
+  // parser: allInputTokenParser({
+  //   parseFn: Number,
+  // }),
+
   // parser: lineRegexCaptureParser({
   //   regex: /([0-9]+),([0-9]+) -> ([0-9]+),([0-9]+)/,
   //   parseFn: captures => ({
@@ -20,7 +28,7 @@ await solve({
   //   }))),
   // }),
 
-  // parser: tokenParser({
+  // parser: lineTokenParser({
   //   parseFn: tokens => ({
   //     from: {x: Number(tokens[0]), y: Number(tokens[1])},
   //     to: {x: Number(tokens[2]), y: Number(tokens[3])},
@@ -32,6 +40,10 @@ await solve({
     part2: '',
   },
 
-  part1: inputs => {},
-  part2: inputs => {},
+  part1: inputs => {
+    console.log(inputs);
+  },
+  part2: inputs => {
+    console.log(inputs);
+  },
 });

@@ -21,3 +21,4 @@ deno run --allow-read day1.ts
 * [Day 3](day3.ts)
 * [Day 4](day4.ts)
 * [Day 5](day5.ts)
+* [Day 6](day6.ts)
