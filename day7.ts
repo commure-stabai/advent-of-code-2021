@@ -49,10 +49,7 @@ function calculateFuelCostIncreasing(positions: number[], alignedPosition: numbe
   positions.forEach(n => cost += triangular(Math.abs(alignedPosition - n)));
   return cost;
 }
-function triangular(num: number) {
-  let sum = 0;
-  for (let i = 0; i <= num; i++) {
-    sum += i;
-  }
-  return sum;
+function triangular(n: number) {
+  // https://en.wikipedia.org/wiki/Triangular_number
+  return n * (n + 1) / 2;
 }
