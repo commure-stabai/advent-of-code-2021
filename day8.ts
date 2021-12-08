@@ -1,25 +1,9 @@
-import { allInputTokenParser, lineParser, solve } from "./helpers.ts";
+import { lineParser, solve } from "./helpers.ts";
 
 await solve({
   baseFileName: 'day8',
 
   nontokenPattern: /\s+/,
-
-  // parser: allInputParser({
-  //   parseFn: raw => raw.split(',').map(Number),
-  // }),
-
-  // parser: allInputTokenParser({
-  //   parseFn: Number,
-  // }),
-
-  // parser: lineRegexCaptureParser({
-  //   regex: /([0-9]+),([0-9]+) -> ([0-9]+),([0-9]+)/,
-  //   parseFn: captures => ({
-  //       from: {x: Number(captures[1]), y: Number(captures[2])},
-  //       to: {x: Number(captures[3]), y: Number(captures[4])},
-  //   }),
-  // }),
 
   parser: lineParser({
     parseFn: line => {
@@ -29,13 +13,6 @@ await solve({
       return {input, output};
     },
   }),
-
-  // parser: lineTokenParser({
-  //   parseFn: tokens => ({
-  //     from: {x: Number(tokens[0]), y: Number(tokens[1])},
-  //     to: {x: Number(tokens[2]), y: Number(tokens[3])},
-  //   }),
-  // }),
 
   expectedTestResults: {
     part1: 26,
