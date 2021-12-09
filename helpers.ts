@@ -145,7 +145,11 @@ export interface InputAnalysisOptions<P = never> {
 }
 
 export function sum(numbers: number[]): number {
-  return numbers.reduce((previous, current) => previous + current);
+  return numbers.length === 0 ? 0 : numbers.reduce((previous, current) => previous + current);
+}
+
+export function product(numbers: number[]): number {
+  return numbers.length === 0 ? 0 : numbers.reduce((previous, current) => previous * current);
 }
 
 export function sumIterable(numbers: IterableIterator<number>): number {
