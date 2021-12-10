@@ -43,6 +43,7 @@ await solve({
   part1: inputs => {
     console.log(inputs);
   },
+
   part2: inputs => {
     console.log(inputs);
   },
