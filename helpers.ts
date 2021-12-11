@@ -144,6 +144,19 @@ export interface InputAnalysisOptions<P = never> {
   nontokenPattern?: RegExp;
 }
 
+export function countRecursive(values: Array<unknown>): number {
+  let count = 0;
+  for (let i = 0; i < values.length; i++) {
+    const value = values[i];
+    if (Array.isArray(value)) {
+      count += countRecursive(value);
+    } else {
+      count++;
+    }
+  }
+  return count;
+}
+
 export function sum(numbers: number[]): number {
   return numbers.length === 0 ? 0 : numbers.reduce((previous, current) => previous + current);
 }
