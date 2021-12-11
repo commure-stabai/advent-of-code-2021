@@ -3,6 +3,7 @@ import {
   underline,
   red,
   green,
+blue,
 } from "https://deno.land/std@0.117.0/fmt/colors.ts";
 
 export type ParseFn<O, I = string> = (value: I, index?: number, array?: Array<I>) => O;
@@ -107,10 +108,14 @@ export async function solve<T = never>(options: SolveOptions<T>) {
     const inputs = JSON.stringify(await analyzeInput(options, true));
     const part1 = options.part1(JSON.parse(inputs));
     const part2 = options.part2(JSON.parse(inputs));
-    const part1Passed = String(part1) === String(options.expectedTestResults.part1);
-    const part2Passed = String(part2) === String(options.expectedTestResults.part2);
-    const part1PassStr = part1Passed ? green('PASS') : red('FAIL');
-    const part2PassStr = part2Passed ? green('PASS') : red('FAIL');
+    const part1ActualText = String(part1);
+    const part2ActualText = String(part2);
+    const part1ExpectedText = String(options.expectedTestResults.part1);
+    const part2ExpectedText = String(options.expectedTestResults.part2);
+    const part1Passed = part1ActualText === part1ExpectedText;
+    const part2Passed = part2ActualText === part2ExpectedText;
+    const part1PassStr = part1Passed ? green('PASS') : `${red('FAIL')} expected ${bold(blue(part1ExpectedText))}, got ${bold(red(part1ActualText))}`;
+    const part2PassStr = part2Passed ? green('PASS') : `${red('FAIL')} expected ${bold(blue(part2ExpectedText))}, got ${bold(red(part2ActualText))}`;
     console.log(bold(underline('Tests:')));
     console.log('Output:', {part1, part2});
     console.log(`Part 1 status: ${part1PassStr}`);
