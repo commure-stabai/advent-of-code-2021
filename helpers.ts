@@ -4,7 +4,9 @@ import {
   red,
   green,
 blue,
+yellow,
 } from "https://deno.land/std@0.117.0/fmt/colors.ts";
+import { basename, extname } from "https://deno.land/std@0.117.0/path/mod.ts";
 
 export type ParseFn<O, I = string> = (value: I, index?: number, array?: Array<I>) => O;
 
@@ -53,15 +55,16 @@ export async function getParsedInputLines<T>(baseName: string, parseFn: (value: 
 }
 
 export async function analyzeInput<T = never>(options: InputAnalysisOptions<T>, forTest = false): Promise<Inputs<T>> {
+  const baseFileName = options.baseFileName ?? detectBaseFileName();
   const nontokenPattern = options.nontokenPattern ?? DEFAULT_NONTOKEN_PATTERN
-  const baseFileName = forTest ? `testdata/${options.baseFileName}` : options.baseFileName;
-  const raw = await getInput(baseFileName);
+  const fileName = forTest ? `testdata/${baseFileName}` : baseFileName;
+  const raw = await getInput(fileName);
   const lines = splitLines(raw);
   const allTokens = tokenize(raw, nontokenPattern);
   const lineTokens = tokenizeAll(lines, nontokenPattern);
   let parsed: T[] = [];
-  const parser = options.parser;
-  if (parser != null) {
+  if (options.parser != null) {
+    const parser = options.parser;
     switch (parser.mode) {
       case "all":
         parsed = parser.parseFn(raw);
@@ -103,17 +106,24 @@ export function lineTokenParser<T>(options: Omit<LineTokenInputParser<T>, 'mode'
   return {mode: 'lineToken', ...options};
 }
 
-export async function solve<T = never>(options: SolveOptions<T>) {
+export interface Solution<I> {
+  inputData: Inputs<I>;
+}
+
+export async function solve<I = never>(options: SolveOptions<I>): Promise<Solution<I>> {
+  let part1Passed = true;
+  let part2Passed = true;
+  let inputData = await analyzeInput(options, true);
   if (options.expectedTestResults != null) {
-    const inputs = JSON.stringify(await analyzeInput(options, true));
-    const part1 = options.part1(JSON.parse(inputs));
-    const part2 = options.part2(JSON.parse(inputs));
-    const part1ActualText = String(part1);
-    const part2ActualText = String(part2);
-    const part1ExpectedText = String(options.expectedTestResults.part1);
-    const part2ExpectedText = String(options.expectedTestResults.part2);
-    const part1Passed = part1ActualText === part1ExpectedText;
-    const part2Passed = part2ActualText === part2ExpectedText;
+    const inputsStr = JSON.stringify(inputData);
+    const part1 = options.part1(JSON.parse(inputsStr));
+    const part2 = options.part2(JSON.parse(inputsStr));
+    const part1ActualText = JSON.stringify(part1) ?? 'undefined';
+    const part2ActualText = JSON.stringify(part2) ?? 'undefined';
+    const part1ExpectedText = JSON.stringify(options.expectedTestResults.part1) ?? 'undefined';
+    const part2ExpectedText = JSON.stringify(options.expectedTestResults.part2) ?? 'undefined';
+    part1Passed = part1ActualText === part1ExpectedText;
+    part2Passed = part2ActualText === part2ExpectedText;
     const part1PassStr = part1Passed ? green('PASS') : `${red('FAIL')} expected ${bold(blue(part1ExpectedText))}, got ${bold(red(part1ActualText))}`;
     const part2PassStr = part2Passed ? green('PASS') : `${red('FAIL')} expected ${bold(blue(part2ExpectedText))}, got ${bold(red(part2ActualText))}`;
     console.log(bold(underline('Tests:')));
@@ -122,11 +132,24 @@ export async function solve<T = never>(options: SolveOptions<T>) {
     console.log(`Part 2 status: ${part2PassStr}`);
     console.log();
   }
-  const inputs = JSON.stringify(await analyzeInput(options, false));
-  const part1 = options.part1(JSON.parse(inputs));
-  const part2 = options.part2(JSON.parse(inputs));
+  if (!part1Passed || !part2Passed) {
+    console.log(yellow('Actual run suppressed because test failed.'));
+  }
+  if (!part1Passed && !part2Passed) {
+    return {inputData};
+  }
+  inputData = await analyzeInput(options, false);
+  const inputsStr = JSON.stringify(inputData);
+  const results: {part1?: unknown, part2?: unknown} = {};
+  if (part1Passed) {
+    results.part1 = options.part1(JSON.parse(inputsStr));
+  }
+  if (part2Passed) {
+    results.part2 = options.part2(JSON.parse(inputsStr));
+  }
   console.log(bold(underline('Results:')));
-  console.log({part1, part2});
+  console.log(results);
+  return {inputData};
 }
 
 export interface SolveOptions<P = never> extends InputAnalysisOptions<P> {
@@ -144,7 +167,7 @@ export interface Inputs<P = never> {
 }
 
 export interface InputAnalysisOptions<P = never> {
-  baseFileName: string;
+  baseFileName?: string;
   parser?: InputParser<P>;
   nontokenPattern?: RegExp;
 }
@@ -201,4 +224,17 @@ export function parseInput<T>(input: string, parseFn: ParseFn<T, string[]>, nont
     parsed.push(parseFn(tokens));
   }
   return parsed;
+}
+
+export function identity<T>() {
+  return (x: T) => x;
+}
+
+export function isEqualTo(value: unknown) {
+  return (x: unknown) => x === value;
+}
+
+export function detectBaseFileName(): string {
+  const baseFile = basename(Deno.mainModule);
+  return baseFile.substr(0, baseFile.length - extname(import.meta.url).length);
 }

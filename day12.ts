@@ -1,4 +1,4 @@
-import { lineTokenParser, solve } from "./helpers.ts";
+import { isEqualTo, lineTokenParser, solve } from "./helpers.ts";
 
 await solve({
   baseFileName: 'day12',
@@ -25,7 +25,7 @@ await solve({
   },
 });
 
-function countPaths(graph: Map<string, Set<string>>, smallLimit: number, cave = 'start', visited: string[] = ['start']): number {
+function countPaths(graph: Map<string, Set<string>>, smallLimit: number, cave = 'start', visited: string[] = []): number {
   const connections = graph.get(cave)!;
   let paths = 0;
   for (const otherCave of connections.values()) {
@@ -33,9 +33,9 @@ function countPaths(graph: Map<string, Set<string>>, smallLimit: number, cave = 
       paths++;
     } else if (otherCave !== 'start') {
       const size = caveSize(otherCave);
-      const visitedCount = visited.filter(x => x === otherCave).length + 1;
+      const visitedCount = visited.filter(isEqualTo(otherCave)).length + 1;
       if (size === 'large' || visitedCount <= smallLimit) {
-        const newLimit = (size == 'small' && visitedCount === smallLimit) ? 1 : smallLimit;
+        const newLimit = (size === 'small' && visitedCount === smallLimit) ? 1 : smallLimit;
         paths += countPaths(graph, newLimit, otherCave, [...visited, cave]);
       }
     }
