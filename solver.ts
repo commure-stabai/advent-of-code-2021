@@ -29,7 +29,7 @@ export interface ParsedInput<T> {
 
 export type Parser<T> = (input: Input) => T;
 
-export const unparsedInput: Parser<undefined> = (input: Input) => undefined;
+export const unparsedInput: Parser<undefined> = () => undefined;
 
 export interface SolverOptions<P> {
   expectedTestResults?: {part1: unknown, part2: unknown};
@@ -60,8 +60,8 @@ export async function solver<I>(parser: Parser<I>, options: SolverOptions<I>): P
   let inputData = {} as ParsedInput<I>;
   if (options.expectedTestResults != null) {
     inputData = await prepareInput(parser, true);
-    const part1 = options.part1(inputData);
-    const part2 = options.part2(inputData);
+    const part1 = await options.part1(inputData);
+    const part2 = await options.part2(inputData);
     const part1ActualText = JSON.stringify(part1) ?? 'undefined';
     const part2ActualText = JSON.stringify(part2) ?? 'undefined';
     const part1ExpectedText = JSON.stringify(options.expectedTestResults.part1) ?? 'undefined';
@@ -85,10 +85,10 @@ export async function solver<I>(parser: Parser<I>, options: SolverOptions<I>): P
   inputData = await prepareInput(parser, false);
   const results: {part1?: unknown, part2?: unknown} = {};
   if (part1Passed) {
-    results.part1 = options.part1(inputData);
+    results.part1 = await options.part1(inputData);
   }
   if (part2Passed) {
-    results.part2 = options.part2(inputData);
+    results.part2 = await options.part2(inputData);
   }
   console.log(bold(underline('Results:')));
   console.log(results);
