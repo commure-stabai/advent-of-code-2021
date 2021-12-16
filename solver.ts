@@ -59,9 +59,8 @@ export async function solver<I>(parser: Parser<I>, options: SolverOptions<I>): P
   let part2Passed = true;
   let inputData = {} as ParsedInput<I>;
   if (options.expectedTestResults != null) {
-    inputData = await prepareInput(parser, true);
-    const part1 = await options.part1(inputData);
-    const part2 = await options.part2(inputData);
+    const part1 = await options.part1(await prepareInput(parser, true));
+    const part2 = await options.part2(await prepareInput(parser, true));
     const part1ActualText = JSON.stringify(part1) ?? 'undefined';
     const part2ActualText = JSON.stringify(part2) ?? 'undefined';
     const part1ExpectedText = JSON.stringify(options.expectedTestResults.part1) ?? 'undefined';
@@ -82,13 +81,12 @@ export async function solver<I>(parser: Parser<I>, options: SolverOptions<I>): P
   if (!part1Passed && !part2Passed) {
     return {inputData};
   }
-  inputData = await prepareInput(parser, false);
   const results: {part1?: unknown, part2?: unknown} = {};
   if (part1Passed) {
-    results.part1 = await options.part1(inputData);
+    results.part1 = await options.part1(await prepareInput(parser, false));
   }
   if (part2Passed) {
-    results.part2 = await options.part2(inputData);
+    results.part2 = await options.part2(await prepareInput(parser, false));
   }
   console.log(bold(underline('Results:')));
   console.log(results);
