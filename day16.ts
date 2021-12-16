@@ -47,7 +47,7 @@ await solver(input => input.raw.split(''), {
     const state: ParserState = {message: input.parsed, bits: ''};
     const packet = readPacket(state);
     if (packet === undefined) {
-      return undefined
+      return undefined;
     }
     return packetVersionSum([packet]);
   },
@@ -56,7 +56,7 @@ await solver(input => input.raw.split(''), {
     const state: ParserState = {message: input.parsed, bits: ''};
     const packet = readPacket(state);
     if (packet === undefined) {
-      return undefined
+      return undefined;
     }
     return evaluatePacket(packet);
   },

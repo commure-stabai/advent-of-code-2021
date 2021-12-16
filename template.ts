@@ -1,10 +1,6 @@
-import { Input, solver } from "./solver.ts";
+import { solver } from "./solver.ts";
 
-function inputParser(input: Input) {
-  return input.tokenizeLines();
-}
-
-const {inputData} = await solver(inputParser, {
+const {inputData} = await solver(input => input.tokenizeLines(), {
   expectedTestResults: {
     part1: '',
     part2: '',
